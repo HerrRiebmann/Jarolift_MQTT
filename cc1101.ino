@@ -169,37 +169,39 @@ void keygen () {
 
 //####################################################################
 // Simple TX routine. Repetitions for simulate continuous button press.
-// Send code two times. In case of one shutter did not "hear" the command.
+// For standard commands (up/down/stop etc.) send the message two times.
 //####################################################################
 void radio_tx(int repetitions) {
   pack = (button << 60) | (new_serial << 32) | dec;
   for (int a = 0; a < repetitions; a++)
   {
-    digitalWrite(TX_PORT, LOW);      // CC1101 in TX Mode+
-    delayMicroseconds(1150);
-    radio_tx_frame(13);              // change 28.01.2018 default 10
-    delayMicroseconds(3500);
+    digitalWrite(TX_PORT, LOW);      // preamble: 1560us "on" level
+    delayMicroseconds(1560);
+    radio_tx_frame(12);              // sync: 12 sequences 400us "off" / 400us "on"
+    digitalWrite(TX_PORT, HIGH);     // start of frame: 3960us "off" level
+    delayMicroseconds(3960);
 
     for (int i = 0; i < 64; i++) {
 
       int out = ((pack >> i) & 0x1); // Bitmask to get MSB and send it first
       if (out == 0x1)
       {
-        digitalWrite(TX_PORT, LOW);  // Simple encoding of bit state 1
-        delayMicroseconds(Lowpulse);
+        digitalWrite(TX_PORT, LOW);  // Simple encoding of bit state 1: 400us "on" / 800us "off"
+        delayMicroseconds(PULSE_SHORT);
         digitalWrite(TX_PORT, HIGH);
-        delayMicroseconds(Highpulse);
+        delayMicroseconds(PULSE_LONG);
       }
       else
       {
-        digitalWrite(TX_PORT, LOW);  // Simple encoding of bit state 0
-        delayMicroseconds(Highpulse);
+        digitalWrite(TX_PORT, LOW);  // Simple encoding of bit state 0: 800us "on" / 400us "off"
+        delayMicroseconds(PULSE_LONG);
         digitalWrite(TX_PORT, HIGH);
-        delayMicroseconds(Lowpulse);
+        delayMicroseconds(PULSE_SHORT);
       }
     }
     radio_tx_group_h();              // Last 8Bit. For motor 8-16.
 
+    digitalWrite(TX_PORT, HIGH);     // end of frame: 16ms "off" level
     delay(16);                       // delay in loop context is save for wdt
   }
 } // void radio_tx
@@ -213,29 +215,29 @@ void radio_tx_group_h() {
     if (out == 0x1)
     {
       digitalWrite(TX_PORT, LOW);    // Simple encoding of bit state 1
-      delayMicroseconds(Lowpulse);
+      delayMicroseconds(PULSE_SHORT);
       digitalWrite(TX_PORT, HIGH);
-      delayMicroseconds(Highpulse);
+      delayMicroseconds(PULSE_LONG);
     }
     else
     {
       digitalWrite(TX_PORT, LOW);    // Simple encoding of bit state 0
-      delayMicroseconds(Highpulse);
+      delayMicroseconds(PULSE_LONG);
       digitalWrite(TX_PORT, HIGH);
-      delayMicroseconds(Lowpulse);
+      delayMicroseconds(PULSE_SHORT);
     }
   }
 } // void radio_tx_group_h
 
 //####################################################################
-// Generates sync-pulses
+// Generates sync-pulses ("off"/"on" transitions)
 //####################################################################
 void radio_tx_frame(int l) {
   for (int i = 0; i < l; ++i) {
-    digitalWrite(TX_PORT, LOW);
-    delayMicroseconds(400);          // change 28.01.2018 default highpulse
     digitalWrite(TX_PORT, HIGH);
-    delayMicroseconds(380);          // change 28.01.2018 default lowpulse
+    delayMicroseconds(PULSE_SHORT);
+    digitalWrite(TX_PORT, LOW);
+    delayMicroseconds(PULSE_SHORT);
   }
 } // void radio_tx_frame
 

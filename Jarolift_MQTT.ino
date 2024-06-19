@@ -75,8 +75,8 @@ extern "C" {
 #define DRD_ADDRESS 0
 
 // User configuration
-#define Lowpulse         400    // Defines pulse-width in microseconds. Adapt for your use...
-#define Highpulse        800
+#define PULSE_SHORT      400    // Defines pulse-width in microseconds. Adapt for your use...
+#define PULSE_LONG       800
 
 #define BITS_SIZE          8
 byte syncWord            = 199;
